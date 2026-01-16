@@ -1,0 +1,227 @@
+﻿version: '3.9'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports: ["5672:5672", "15672:15672"]
+
+  postgres-auth:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: auth
+    ports: ["5433:5432"]
+
+  postgres-pricing:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pricing
+    ports: ["5434:5432"]
+
+  postgres-inventory:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: inventory
+    ports: ["5435:5432"]
+
+  postgres-cart:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: cart
+    ports: ["5436:5432"]
+
+  postgres-order:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: orders
+    ports: ["5437:5432"]
+
+  postgres-payment:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: payment
+    ports: ["5438:5432"]
+
+  postgres-seller:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: seller
+    ports: ["5439:5432"]
+
+  postgres-shipping:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: shipping
+    ports: ["5440:5432"]
+
+  postgres-notification:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: notification
+    ports: ["5441:5432"]
+
+  mongo-product:
+    image: mongo:6
+    ports: ["27017:27017"]
+
+  mongo-review:
+    image: mongo:6
+    ports: ["27018:27017"]
+
+  api-gateway:
+    build: ./api-gateway
+    environment:
+      PORT: 4000
+      AUTH_SERVICE_URL: http://auth-service:4001
+      PRODUCT_SERVICE_URL: http://product-service:4002
+      PRICING_SERVICE_URL: http://pricing-service:4003
+      INVENTORY_SERVICE_URL: http://inventory-service:4004
+      CART_SERVICE_URL: http://cart-service:4005
+      ORDER_SERVICE_URL: http://order-service:4006
+      PAYMENT_SERVICE_URL: http://payment-service:4007
+      SELLER_SERVICE_URL: http://seller-service:4008
+      SHIPPING_SERVICE_URL: http://shipping-service:4009
+      NOTIFICATION_SERVICE_URL: http://notification-service:4010
+      REVIEW_SERVICE_URL: http://review-service:4011
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret
+    ports: ["4000:4000"]
+    depends_on: [redis]
+
+  auth-service:
+    build: ./services/auth-service
+    environment:
+      PORT: 4001
+      DATABASE_URL: postgresql://postgres:password@postgres-auth:5432/auth
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret
+      JWT_REFRESH_SECRET: dev-refresh
+      SERVICE_NAME: auth-service
+    ports: ["4001:4001"]
+    depends_on: [postgres-auth, redis]
+
+  product-service:
+    build: ./services/product-service
+    environment:
+      PORT: 4002
+      MONGO_URI: mongodb://mongo-product:27017/products
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: product-service
+    ports: ["4002:4002"]
+    depends_on: [mongo-product, redis]
+
+  pricing-service:
+    build: ./services/pricing-service
+    environment:
+      PORT: 4003
+      DATABASE_URL: postgresql://postgres:password@postgres-pricing:5432/pricing
+      SERVICE_NAME: pricing-service
+    ports: ["4003:4003"]
+    depends_on: [postgres-pricing]
+
+  inventory-service:
+    build: ./services/inventory-service
+    environment:
+      PORT: 4004
+      DATABASE_URL: postgresql://postgres:password@postgres-inventory:5432/inventory
+      SERVICE_NAME: inventory-service
+    ports: ["4004:4004"]
+    depends_on: [postgres-inventory]
+
+  cart-service:
+    build: ./services/cart-service
+    environment:
+      PORT: 4005
+      DATABASE_URL: postgresql://postgres:password@postgres-cart:5432/cart
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: cart-service
+    ports: ["4005:4005"]
+    depends_on: [postgres-cart, redis]
+
+  order-service:
+    build: ./services/order-service
+    environment:
+      PORT: 4006
+      DATABASE_URL: postgresql://postgres:password@postgres-order:5432/orders
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      SERVICE_NAME: order-service
+    ports: ["4006:4006"]
+    depends_on: [postgres-order, rabbitmq]
+
+  payment-service:
+    build: ./services/payment-service
+    environment:
+      PORT: 4007
+      DATABASE_URL: postgresql://postgres:password@postgres-payment:5432/payment
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      SERVICE_NAME: payment-service
+    ports: ["4007:4007"]
+    depends_on: [postgres-payment, rabbitmq]
+
+  seller-service:
+    build: ./services/seller-service
+    environment:
+      PORT: 4008
+      DATABASE_URL: postgresql://postgres:password@postgres-seller:5432/seller
+      SERVICE_NAME: seller-service
+    ports: ["4008:4008"]
+    depends_on: [postgres-seller]
+
+  shipping-service:
+    build: ./services/shipping-service
+    environment:
+      PORT: 4009
+      DATABASE_URL: postgresql://postgres:password@postgres-shipping:5432/shipping
+      SERVICE_NAME: shipping-service
+    ports: ["4009:4009"]
+    depends_on: [postgres-shipping]
+
+  notification-service:
+    build: ./services/notification-service
+    environment:
+      PORT: 4010
+      DATABASE_URL: postgresql://postgres:password@postgres-notification:5432/notification
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      SERVICE_NAME: notification-service
+    ports: ["4010:4010"]
+    depends_on: [postgres-notification, rabbitmq]
+
+  review-service:
+    build: ./services/review-service
+    environment:
+      PORT: 4011
+      MONGO_URI: mongodb://mongo-review:27017/reviews
+      SERVICE_NAME: review-service
+    ports: ["4011:4011"]
+    depends_on: [mongo-review]
+
+  docs-service:
+    build: ./services/docs-service
+    environment:
+      PORT: 4012
+      SERVICE_NAME: docs-service
+      AUTH_SERVICE_URL: http://auth-service:4001
+      PRODUCT_SERVICE_URL: http://product-service:4002
+      PRICING_SERVICE_URL: http://pricing-service:4003
+      INVENTORY_SERVICE_URL: http://inventory-service:4004
+      CART_SERVICE_URL: http://cart-service:4005
+      ORDER_SERVICE_URL: http://order-service:4006
+      PAYMENT_SERVICE_URL: http://payment-service:4007
+      SELLER_SERVICE_URL: http://seller-service:4008
+      SHIPPING_SERVICE_URL: http://shipping-service:4009
+      NOTIFICATION_SERVICE_URL: http://notification-service:4010
+      REVIEW_SERVICE_URL: http://review-service:4011
+    ports: ["4012:4012"]
+    depends_on: [auth-service, product-service, pricing-service, inventory-service, cart-service, order-service, payment-service, seller-service, shipping-service, notification-service, review-service]
