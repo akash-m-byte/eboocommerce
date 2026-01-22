@@ -1,4 +1,8 @@
 # Update auth-service .env with SendGrid configuration
+# NOTE: This script does NOT include API keys for security reasons.
+# You must add your SendGrid API key manually to the .env file.
+# Get your API key from: https://app.sendgrid.com/settings/api_keys
+
 $envFile = "services\auth-service\.env"
 
 if (Test-Path $envFile) {
@@ -12,9 +16,10 @@ if (Test-Path $envFile) {
     }
     
     if ($content -match "SENDGRID_API_KEY=") {
-        $content = $content -replace "SENDGRID_API_KEY=.*", "SENDGRID_API_KEY=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"
+        Write-Host "SENDGRID_API_KEY already exists. Please update it manually with your API key." -ForegroundColor Yellow
     } else {
-        $content += "`nSENDGRID_API_KEY=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"
+        Write-Host "Please add SENDGRID_API_KEY manually to your .env file" -ForegroundColor Yellow
+        Write-Host "Get your API key from: https://app.sendgrid.com/settings/api_keys" -ForegroundColor Cyan
     }
     
     if ($content -notmatch "SENDGRID_FROM_EMAIL=") {
@@ -36,7 +41,7 @@ JWT_SECRET=dev-jwt-secret-key-change-in-production
 JWT_REFRESH_SECRET=dev-refresh-secret-key-change-in-production
 RABBITMQ_URL=amqp://eboo:eboo123@localhost:5672
 EMAIL_PROVIDER=sendgrid
-SENDGRID_API_KEY=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
+SENDGRID_API_KEY=your-sendgrid-api-key-here
 SENDGRID_FROM_EMAIL=noreply@yourdomain.com
 FRONTEND_URL=http://localhost:3000
 RESET_PASSWORD_URL=http://localhost:3000/reset-password

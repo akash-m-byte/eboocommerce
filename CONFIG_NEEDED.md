@@ -15,7 +15,7 @@ SMTP_PASS=your-app-password
 SMTP_FROM=noreply@yourdomain.com
 
 # Option 2: SendGrid (Recommended for Production)
-SENDGRID_API_KEY=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
+SENDGRID_API_KEY=SG.your-sendgrid-api-key-here
 SENDGRID_FROM_EMAIL=noreply@yourdomain.com
 SENDGRID_FROM_NAME=E-boo Platform
 SENDGRID_REPLY_TO=support@yourdomain.com
