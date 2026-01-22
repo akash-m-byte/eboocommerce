@@ -1,4 +1,4 @@
-﻿import { prisma } from './prisma';
+import { prisma } from './prisma';
 
 export const orderRepository = {
   create: (userId: string, items: { productId: string; quantity: number; price: number }[], total: number) =>

@@ -44,11 +44,103 @@ Each service exposes Swagger UI at:
 ### Adding Documentation
 See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for detailed guide on adding Swagger annotations to routes.
 
-## Running Locally
-1. Install Docker Desktop
-2. Run: `docker-compose up --build`
-3. GraphQL Gateway: `http://localhost:4000/graphql`
-4. Documentation Hub: `http://localhost:4012/docs`
+## Development Setup (Recommended)
+
+**For development, we recommend running services locally (not in Docker) for faster iteration.**
+
+### Quick Start
+
+1. **Start Infrastructure (Databases)**
+   ```bash
+   # Start only databases and infrastructure services
+   docker-compose -f docker-compose.dev.yml up -d
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   # Install root dependencies (concurrently)
+   npm install
+   
+   # Install all service dependencies
+   npm run install:all
+   ```
+
+3. **Set Up Environment Variables**
+   ```bash
+   # Each service needs a .env file
+   # Copy examples if available, or create with:
+   # PORT=4001
+   # SERVICE_NAME=auth-service
+   # DATABASE_URL=postgresql://eboo:eboo123@localhost:5432/eboocommerce
+   # REDIS_URL=redis://localhost:6379
+   # RABBITMQ_URL=amqp://eboo:eboo123@localhost:5672
+   ```
+
+4. **Run Database Migrations** (for Prisma services)
+   ```bash
+   cd services/auth-service
+   npx prisma migrate dev
+   # Repeat for other Prisma services
+   ```
+
+5. **Start All Services**
+   ```bash
+   # Run all services in development mode with hot reload
+   npm run dev
+   ```
+
+### Access Points
+- **GraphQL Gateway**: http://localhost:4000/graphql
+- **Documentation Hub**: http://localhost:4012/docs
+- **RabbitMQ Management**: http://localhost:15672 (user: eboo, pass: eboo123)
+
+### Verifying Services Are Running
+
+**Option 1: Use the verification script (Recommended)**
+```powershell
+.\verify-services.ps1
+```
+
+**Option 2: Manual checks**
+```powershell
+# Check if ports are listening
+Get-NetTCPConnection -LocalPort 4000,4001,4002,4003,4004,4005,4006,4007,4008,4009,4010,4011,4012 -ErrorAction SilentlyContinue
+
+# Test health endpoints
+Invoke-WebRequest -Uri http://localhost:4001/api/health
+Invoke-WebRequest -Uri http://localhost:4002/api/health
+# ... etc for each service
+```
+
+**Option 3: Browser/curl checks**
+- Open http://localhost:4012/docs in browser (Docs Service)
+- Open http://localhost:4000/graphql in browser (API Gateway)
+- Check terminal output for service startup messages
+
+**Option 4: Check process list**
+```powershell
+# See all Node.js processes
+Get-Process node -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, StartTime
+```
+
+### Running Individual Services
+```bash
+# Run a single service
+cd services/auth-service
+npm install
+npm run dev
+```
+
+See [dev-setup.md](./dev-setup.md) for detailed development instructions.
+
+## Production/Deployment Setup
+
+For production deployment with Docker:
+```bash
+docker-compose -f docker-compose.prod.yml up --build
+```
+
+**Note**: Production Docker setup is simplified. For full containerization, see deployment documentation.
 
 ## Git Setup
 

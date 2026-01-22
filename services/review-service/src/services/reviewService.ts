@@ -1,7 +1,59 @@
-﻿import { reviewRepository } from '../repositories/reviewRepository';
+import { reviewRepository } from '../repositories/reviewRepository';
+import { ValidationError, NotFoundError } from '../../../../shared/utils/errors';
 
-export const reviewService = {
-  list: (productId: string) => reviewRepository.listByProduct(productId),
-  create: (data: any) => reviewRepository.create(data),
-  moderate: (id: string, status: string) => reviewRepository.moderate(id, status)
-};
+export interface CreateReviewInput {
+  productId: string;
+  userId: string;
+  rating: number;
+  comment?: string;
+}
+
+/**
+ * Review Service - Business Logic Layer
+ */
+export class ReviewService {
+  async list(productId: string) {
+    if (!productId) {
+      throw new ValidationError('ProductId is required');
+    }
+    return reviewRepository.listByProduct(productId);
+  }
+
+  async create(input: CreateReviewInput) {
+    // Business validation
+    if (!input.productId || !input.userId) {
+      throw new ValidationError('ProductId and UserId are required');
+    }
+    if (input.rating < 1 || input.rating > 5) {
+      throw new ValidationError('Rating must be between 1 and 5');
+    }
+
+    // Transform data
+    const data = {
+      ...input,
+      status: 'PENDING', // New reviews need moderation
+      createdAt: new Date()
+    };
+
+    return reviewRepository.create(data);
+  }
+
+  async moderate(id: string, status: string) {
+    if (!id) {
+      throw new ValidationError('Review ID is required');
+    }
+    if (!['APPROVED', 'REJECTED'].includes(status)) {
+      throw new ValidationError('Status must be APPROVED or REJECTED');
+    }
+
+    const review = await reviewRepository.findById(id);
+    if (!review) {
+      throw new NotFoundError('Review');
+    }
+
+    return reviewRepository.moderate(id, status);
+  }
+}
+
+// Export singleton instance
+export const reviewService = new ReviewService();

@@ -1,8 +1,16 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import { authController } from '../controllers/authController';
-import { validate } from '../../../shared/utils/validation';
-import { registerSchema, loginSchema, refreshSchema } from '../../../shared/schemas/authSchemas';
-import { authenticate } from '../../../shared/middleware/auth';
+import { validate } from '../../../../shared/utils/validation';
+import {
+  registerSchema,
+  loginSchema,
+  refreshSchema,
+  requestPasswordResetSchema,
+  resetPasswordSchema,
+  verifyEmailSchema,
+  resendVerificationSchema
+} from '../../../../shared/schemas/authSchemas';
+import { authenticate } from '../../../../shared/middleware/auth';
 
 const router = Router();
 
@@ -108,5 +116,107 @@ router.post('/refresh', validate(refreshSchema), authController.refresh);
  *         description: Unauthorized
  */
 router.get('/me', authenticate, authController.me);
+
+/**
+ * @swagger
+ * /auth/password/reset/request:
+ *   post:
+ *     summary: Request password reset
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Password reset email sent (if email exists)
+ */
+router.post('/password/reset/request', validate(requestPasswordResetSchema), authController.requestPasswordReset);
+
+/**
+ * @swagger
+ * /auth/password/reset:
+ *   post:
+ *     summary: Reset password using token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - newPassword
+ *             properties:
+ *               token:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 8
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       401:
+ *         description: Invalid or expired token
+ */
+router.post('/password/reset', validate(resetPasswordSchema), authController.resetPassword);
+
+/**
+ * @swagger
+ * /auth/email/verify:
+ *   post:
+ *     summary: Verify email address
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *       401:
+ *         description: Invalid or expired token
+ */
+router.post('/email/verify', validate(verifyEmailSchema), authController.verifyEmail);
+
+/**
+ * @swagger
+ * /auth/email/resend:
+ *   post:
+ *     summary: Resend verification email
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Verification email sent (if email exists and not verified)
+ */
+router.post('/email/resend', validate(resendVerificationSchema), authController.resendVerificationEmail);
 
 export default router;

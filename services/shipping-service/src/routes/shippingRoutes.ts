@@ -1,4 +1,4 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import { shippingController } from '../controllers/shippingController';
 
 const router = Router();

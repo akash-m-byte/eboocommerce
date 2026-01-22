@@ -3,7 +3,7 @@
 let connection: Connection | null = null;
 let channel: Channel | null = null;
 
-export async function initEventBus(url: string) {
+export async function initEventBus(url: string): Promise<Channel> {
   if (channel) return channel;
   connection = await amqp.connect(url);
   channel = await connection.createChannel();

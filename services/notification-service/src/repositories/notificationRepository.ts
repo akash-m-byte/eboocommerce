@@ -1,4 +1,4 @@
-﻿import { prisma } from './prisma';
+import { prisma } from './prisma';
 
 export const notificationRepository = {
   create: (userId: string | null, channel: 'EMAIL' | 'SMS', message: string) =>

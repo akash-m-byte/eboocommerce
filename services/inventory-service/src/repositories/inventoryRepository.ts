@@ -1,4 +1,4 @@
-﻿import { prisma } from './prisma';
+import { prisma } from './prisma';
 
 export const inventoryRepository = {
   getStock: (productId: string) => prisma.inventoryItem.findMany({ where: { productId } }),

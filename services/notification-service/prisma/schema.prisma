@@ -1,4 +1,4 @@
-﻿// Prisma schema for notification-service
+// Prisma schema for notification-service
 
 generator client {
   provider = "prisma-client-js"

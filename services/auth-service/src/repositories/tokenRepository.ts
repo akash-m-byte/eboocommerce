@@ -1,4 +1,4 @@
-﻿import { prisma } from './prisma';
+import { prisma } from './prisma';
 
 export const tokenRepository = {
   createRefreshToken: (userId: string, token: string, expiresAt: Date) =>

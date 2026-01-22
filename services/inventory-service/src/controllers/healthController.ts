@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 
 export const healthController = {
   status: (_req: Request, res: Response) => {

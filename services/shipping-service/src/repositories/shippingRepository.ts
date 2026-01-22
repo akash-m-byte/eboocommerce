@@ -1,4 +1,4 @@
-﻿import { prisma } from './prisma';
+import { prisma } from './prisma';
 
 export const shippingRepository = {
   addAddress: (data: any) => prisma.address.create({ data }),

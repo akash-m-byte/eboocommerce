@@ -1,8 +1,10 @@
-﻿import express from 'express';
+import dotenv from 'dotenv';
+dotenv.config();
+
+import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import router from './routes';
 import { requestTracing } from '../../../shared/utils/tracing';
 import { logger } from '../../../shared/utils/logger';
@@ -10,8 +12,6 @@ import { errorHandler } from '../../../shared/middleware/errorHandler';
 import { setupGracefulShutdown } from '../../../shared/utils/gracefulShutdown';
 import { setupSwagger } from '../../../shared/utils/swagger';
 import { prisma } from './repositories/prisma';
-
-dotenv.config();
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -24,6 +24,17 @@ app.use(requestTracing);
 setupSwagger(app, 'auth-service');
 
 app.use('/api', router);
+
+// 404 handler
+app.use((req: express.Request, res: express.Response) => {
+  res.status(404).json({
+    error: {
+      code: 'NOT_FOUND',
+      message: `Route ${req.method} ${req.path} not found`,
+      hint: `Did you mean ${req.method} /api${req.path}?`
+    }
+  });
+});
 
 app.use(errorHandler);
 

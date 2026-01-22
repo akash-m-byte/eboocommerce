@@ -1,4 +1,4 @@
-﻿import { Schema, model } from 'mongoose';
+import { Schema, model } from 'mongoose';
 
 const reviewSchema = new Schema({
   productId: { type: String, required: true },

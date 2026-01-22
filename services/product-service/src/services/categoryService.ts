@@ -1,4 +1,4 @@
-﻿import { categoryRepository } from '../repositories/categoryRepository';
+import { categoryRepository } from '../repositories/categoryRepository';
 
 export const categoryService = {
   list: () => categoryRepository.list(),

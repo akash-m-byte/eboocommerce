@@ -1,59 +1,345 @@
-﻿import bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { userRepository } from '../repositories/userRepository';
 import { tokenRepository } from '../repositories/tokenRepository';
-import { UnauthorizedError, NotFoundError } from '../../../shared/utils/errors';
+import { passwordResetRepository } from '../repositories/passwordResetRepository';
+import { emailVerificationRepository } from '../repositories/emailVerificationRepository';
+import { emailService } from '../utils/emailService';
+import { logger } from '../../../../shared/utils/logger';
+import { UnauthorizedError, NotFoundError, ConflictError, ValidationError } from '../../../../shared/utils/errors';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev-refresh';
 
-export const authService = {
-  async register(email: string, password: string, role: 'ADMIN' | 'SELLER' | 'CUSTOMER') {
-    const existing = await userRepository.findByEmail(email);
-    if (existing) throw new Error('Email already registered');
+export interface RegisterInput {
+  email: string;
+  password: string;
+  role?: 'ADMIN' | 'SELLER' | 'CUSTOMER';
+}
 
-    const passwordHash = await bcrypt.hash(password, 12);
-    const user = await userRepository.createUser(email, passwordHash, role);
+export interface LoginInput {
+  email: string;
+  password: string;
+}
 
-    const accessToken = jwt.sign({ sub: user.id, role: user.role }, JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ sub: user.id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
+export interface AuthResult {
+  user: {
+    id: string;
+    email: string;
+    role: string;
+  };
+  accessToken: string;
+  refreshToken: string;
+}
 
-    await tokenRepository.createRefreshToken(user.id, refreshToken, new Date(Date.now() + 7 * 24 * 3600 * 1000));
-    return { user, accessToken, refreshToken };
-  },
+export interface TokenResult {
+  accessToken: string;
+  refreshToken: string;
+}
 
-  async login(email: string, password: string) {
-    const user = await userRepository.findByEmail(email);
-    if (!user) throw new UnauthorizedError('Invalid credentials');
+export interface RequestPasswordResetInput {
+  email: string;
+}
 
-    const match = await bcrypt.compare(password, user.passwordHash);
-    if (!match) throw new UnauthorizedError('Invalid credentials');
+export interface ResetPasswordInput {
+  token: string;
+  newPassword: string;
+}
 
-    const accessToken = jwt.sign({ sub: user.id, role: user.role }, JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ sub: user.id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
+export interface VerifyEmailInput {
+  token: string;
+}
 
-    await tokenRepository.createRefreshToken(user.id, refreshToken, new Date(Date.now() + 7 * 24 * 3600 * 1000));
-    return { user, accessToken, refreshToken };
-  },
+/**
+ * Auth Service - Business Logic Layer
+ * Handles authentication business logic: password hashing, JWT generation, token management
+ */
+export class AuthService {
+  /**
+   * Register a new user
+   */
+  async register(input: RegisterInput): Promise<AuthResult> {
+    // Check if user already exists
+    const existing = await userRepository.findByEmail(input.email);
+    if (existing) {
+      throw new ConflictError('Email already registered');
+    }
 
-  async refresh(token: string) {
-    const stored = await tokenRepository.findRefreshToken(token);
-    if (!stored) throw new UnauthorizedError('Invalid refresh token');
+    // Hash password
+    const passwordHash = await bcrypt.hash(input.password, 12);
 
+    // Create user in database
+    const user = await userRepository.createUser(input.email, passwordHash, input.role || 'CUSTOMER');
+
+    // Generate email verification token
+    const verificationToken = this.generateSecureToken();
+    const verificationExpiry = new Date(
+      Date.now() + (parseInt(process.env.EMAIL_VERIFICATION_TOKEN_EXPIRY || '72') * 60 * 60 * 1000)
+    );
+    await emailVerificationRepository.create(user.id, verificationToken, verificationExpiry);
+
+    // Send verification email
+    await emailService.sendVerificationEmail(user.email, verificationToken);
+
+    // Generate tokens
+    const tokens = this.generateTokens(user.id, user.role);
+
+    // Store refresh token
+    await tokenRepository.createRefreshToken(
+      user.id,
+      tokens.refreshToken,
+      new Date(Date.now() + 7 * 24 * 3600 * 1000) // 7 days
+    );
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        emailVerified: false
+      },
+      ...tokens
+    };
+  }
+
+  /**
+   * Login user
+   */
+  async login(input: LoginInput): Promise<AuthResult> {
+    // Find user by email
+    const user = await userRepository.findByEmail(input.email);
+    if (!user) {
+      throw new UnauthorizedError('Invalid credentials');
+    }
+
+    // Verify password
+    const match = await bcrypt.compare(input.password, user.passwordHash);
+    if (!match) {
+      throw new UnauthorizedError('Invalid credentials');
+    }
+
+    // Generate tokens
+    const tokens = this.generateTokens(user.id, user.role);
+
+    // Store refresh token
+    await tokenRepository.createRefreshToken(
+      user.id,
+      tokens.refreshToken,
+      new Date(Date.now() + 7 * 24 * 3600 * 1000) // 7 days
+    );
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role
+      },
+      ...tokens
+    };
+  }
+
+  /**
+   * Refresh access token
+   */
+  async refreshToken(refreshToken: string): Promise<TokenResult> {
+    // Find stored refresh token
+    const stored = await tokenRepository.findRefreshToken(refreshToken);
+    if (!stored) {
+      throw new UnauthorizedError('Invalid refresh token');
+    }
+
+    // Verify token signature
     try {
-      jwt.verify(token, JWT_REFRESH_SECRET);
+      jwt.verify(refreshToken, JWT_REFRESH_SECRET);
     } catch {
       throw new UnauthorizedError('Invalid refresh token');
     }
 
+    // Get user
     const user = await userRepository.findById(stored.userId);
-    if (!user) throw new NotFoundError('User');
+    if (!user) {
+      throw new NotFoundError('User');
+    }
 
-    await tokenRepository.deleteRefreshToken(token);
-    const newAccessToken = jwt.sign({ sub: user.id, role: user.role }, JWT_SECRET, { expiresIn: '15m' });
-    const newRefreshToken = jwt.sign({ sub: user.id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
+    // Delete old refresh token
+    await tokenRepository.deleteRefreshToken(refreshToken);
 
-    await tokenRepository.createRefreshToken(user.id, newRefreshToken, new Date(Date.now() + 7 * 24 * 3600 * 1000));
-    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+    // Generate new tokens
+    const tokens = this.generateTokens(user.id, user.role);
+
+    // Store new refresh token
+    await tokenRepository.createRefreshToken(
+      user.id,
+      tokens.refreshToken,
+      new Date(Date.now() + 7 * 24 * 3600 * 1000) // 7 days
+    );
+
+    return tokens;
   }
-};
+
+  /**
+   * Generate JWT tokens
+   */
+  private generateTokens(userId: string, role: string): TokenResult {
+    const accessToken = jwt.sign(
+      { sub: userId, role },
+      JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { sub: userId },
+      JWT_REFRESH_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return { accessToken, refreshToken };
+  }
+
+  /**
+   * Request password reset
+   */
+  async requestPasswordReset(input: RequestPasswordResetInput): Promise<void> {
+    // Find user by email
+    const user = await userRepository.findByEmail(input.email);
+    
+    // Don't reveal if user exists (security best practice)
+    if (!user) {
+      // Still return success to prevent email enumeration
+      return;
+    }
+
+    // Delete existing reset tokens for this user
+    await passwordResetRepository.deleteByUserId(user.id);
+
+    // Generate reset token
+    const resetToken = this.generateSecureToken();
+    const expiresAt = new Date(
+      Date.now() + (parseInt(process.env.PASSWORD_RESET_TOKEN_EXPIRY || '24') * 60 * 60 * 1000)
+    );
+
+    // Store reset token
+    await passwordResetRepository.create(user.id, resetToken, expiresAt);
+
+    // Send reset email
+    const emailResult = await emailService.sendPasswordResetEmail(user.email, resetToken);
+    if (!emailResult.success) {
+      logger.warn({ 
+        email: user.email, 
+        error: emailResult.error 
+      }, 'Failed to send password reset email');
+      // Still return success to prevent email enumeration
+    }
+  }
+
+  /**
+   * Reset password using token
+   */
+  async resetPassword(input: ResetPasswordInput): Promise<void> {
+    // Find token
+    const resetToken = await passwordResetRepository.findByToken(input.token);
+    if (!resetToken) {
+      throw new UnauthorizedError('Invalid or expired reset token');
+    }
+
+    // Check if token is used
+    if (resetToken.used) {
+      throw new UnauthorizedError('Reset token has already been used');
+    }
+
+    // Check if token is expired
+    if (resetToken.expiresAt < new Date()) {
+      throw new UnauthorizedError('Reset token has expired');
+    }
+
+    // Validate new password
+    if (!input.newPassword || input.newPassword.length < 8) {
+      throw new ValidationError('Password must be at least 8 characters');
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(input.newPassword, 12);
+
+    // Update user password
+    await userRepository.updatePassword(resetToken.userId, passwordHash);
+
+    // Mark token as used
+    await passwordResetRepository.markAsUsed(input.token);
+
+    // Delete all refresh tokens for security
+    // (Optional: force user to login again)
+  }
+
+  /**
+   * Verify email address
+   */
+  async verifyEmail(input: VerifyEmailInput): Promise<void> {
+    // Find token
+    const verificationToken = await emailVerificationRepository.findByToken(input.token);
+    if (!verificationToken) {
+      throw new UnauthorizedError('Invalid or expired verification token');
+    }
+
+    // Check if token is used
+    if (verificationToken.used) {
+      throw new UnauthorizedError('Verification token has already been used');
+    }
+
+    // Check if token is expired
+    if (verificationToken.expiresAt < new Date()) {
+      throw new UnauthorizedError('Verification token has expired');
+    }
+
+    // Mark email as verified
+    await userRepository.verifyEmail(verificationToken.userId);
+
+    // Mark token as used
+    await emailVerificationRepository.markAsUsed(input.token);
+  }
+
+  /**
+   * Resend verification email
+   */
+  async resendVerificationEmail(email: string): Promise<void> {
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      // Don't reveal if user exists
+      return;
+    }
+
+    if (user.emailVerified) {
+      throw new ValidationError('Email is already verified');
+    }
+
+    // Delete existing verification tokens
+    await emailVerificationRepository.deleteByUserId(user.id);
+
+    // Generate new verification token
+    const verificationToken = this.generateSecureToken();
+    const verificationExpiry = new Date(
+      Date.now() + (parseInt(process.env.EMAIL_VERIFICATION_TOKEN_EXPIRY || '72') * 60 * 60 * 1000)
+    );
+    await emailVerificationRepository.create(user.id, verificationToken, verificationExpiry);
+
+    // Send verification email
+    const emailResult = await emailService.sendVerificationEmail(user.email, verificationToken);
+    if (!emailResult.success) {
+      logger.warn({ 
+        email: user.email, 
+        error: emailResult.error 
+      }, 'Failed to send verification email');
+      // Still return success to prevent email enumeration
+    }
+  }
+
+  /**
+   * Generate secure random token
+   */
+  private generateSecureToken(): string {
+    return crypto.randomBytes(32).toString('hex');
+  }
+}
+
+// Export singleton instance
+export const authService = new AuthService();

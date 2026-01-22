@@ -1,4 +1,4 @@
-﻿import { ReviewModel } from '../models/review';
+import { ReviewModel } from '../models/review';
 
 export const reviewRepository = {
   listByProduct: (productId: string) => ReviewModel.find({ productId }).lean(),

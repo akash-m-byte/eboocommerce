@@ -1,5 +1,5 @@
 ﻿import axios from 'axios';
-import { logger } from '../../shared/utils/logger';
+import { logger } from '../../../shared/utils/logger';
 
 const get = (base: string, path: string, headers: Record<string, string>) =>
   axios.get(`${base}${path}`, { headers, timeout: 5000 }).then(r => r.data).catch(err => {

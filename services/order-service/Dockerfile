@@ -1,8 +1,9 @@
 ﻿FROM node:20-alpine
+COPY shared ./shared
 WORKDIR /app
-COPY package.json package-lock.json* ./
+COPY services/order-service/package.json services/order-service/package-lock.json* ./
 RUN npm install --production=false
-COPY . .
+COPY services/order-service/ ./
 RUN npm run build
-EXPOSE 
+EXPOSE 4006
 CMD ["npm", "start"]

@@ -1,4 +1,4 @@
-﻿import { prisma } from './prisma';
+import { prisma } from './prisma';
 
 export const paymentRepository = {
   create: (orderId: string, userId: string, amount: number) => prisma.payment.create({ data: { orderId, userId, amount } }),

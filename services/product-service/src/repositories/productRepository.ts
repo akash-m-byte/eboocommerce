@@ -1,4 +1,4 @@
-﻿import { ProductModel } from '../models/product';
+import { ProductModel } from '../models/product';
 
 export const productRepository = {
   findAll: (limit: number, offset: number, search?: string, categoryId?: string) => {

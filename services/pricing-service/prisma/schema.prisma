@@ -1,4 +1,4 @@
-﻿// Prisma schema for pricing-service
+// Prisma schema for pricing-service
 
 generator client {
   provider = "prisma-client-js"
@@ -15,7 +15,6 @@ model Price {
   basePrice  Float
   currency   String
   createdAt  DateTime @default(now())
-  histories  PriceHistory[]
 }
 
 model PriceHistory {

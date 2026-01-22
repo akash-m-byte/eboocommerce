@@ -1,4 +1,4 @@
-﻿import { prisma } from './prisma';
+import { prisma } from './prisma';
 
 export const sellerRepository = {
   onboard: (userId: string, storeName: string) => prisma.seller.create({ data: { userId, storeName, status: 'ACTIVE' } }),

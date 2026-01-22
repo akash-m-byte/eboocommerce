@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { loadEnv } from '../../../shared/config/env';
+import { loadEnv as loadEnvFromShared } from '../../../shared/config/env';
 
 const schema = z.object({
   PORT: z.string(),
@@ -18,4 +18,4 @@ const schema = z.object({
   REVIEW_SERVICE_URL: z.string()
 });
 
-export const env = loadEnv(schema);
+export const env = loadEnvFromShared(schema);

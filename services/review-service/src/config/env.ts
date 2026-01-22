@@ -1,5 +1,5 @@
-﻿import { z } from 'zod';
-import { loadEnv } from '../../../shared/config/env';
+import { z } from 'zod';
+import { loadEnv as loadEnvFromShared } from '../../../../shared/config/env';
 
 type EnvSchema = {
   PORT: string;
@@ -19,5 +19,5 @@ const schema = z.object({
   MONGO_URI: z.string().optional()
 });
 
-export const env = loadEnv(schema) as EnvSchema;
+export const env = loadEnvFromShared(schema) as EnvSchema;
 

@@ -37,7 +37,11 @@ const limiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
-  store: new RedisStore({ sendCommand: (...args: string[]) => redis.call(...args) })
+  store: new RedisStore({ 
+    sendCommand: async (...args: string[]): Promise<any> => {
+      return (redis.call as any)(...args);
+    }
+  })
 });
 app.use(limiter);
 
@@ -47,8 +51,8 @@ async function start() {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    context: ({ req }) => ({
-      user: verifyToken(req),
+    context: ({ req }: { req: express.Request }) => ({
+      user: verifyToken(req as any),
       headers: {
         'x-request-id': req.headers['x-request-id'] as string,
         authorization: req.headers.authorization || ''
@@ -64,7 +68,7 @@ async function start() {
   });
 
   await server.start();
-  server.applyMiddleware({ app, path: '/graphql' });
+  server.applyMiddleware({ app: app as any, path: '/graphql' });
 
   const port = process.env.PORT || 4000;
   const httpServer = app.listen(port, () => {

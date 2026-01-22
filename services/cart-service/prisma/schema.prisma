@@ -1,4 +1,4 @@
-﻿// Prisma schema for cart-service
+// Prisma schema for cart-service
 
 generator client {
   provider = "prisma-client-js"

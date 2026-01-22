@@ -1,6 +1,4 @@
-﻿version: '3.9'
-
-services:
+﻿services:
   redis:
     image: redis:7-alpine
     ports: ["6379:6379"]
@@ -81,7 +79,9 @@ services:
     ports: ["27018:27017"]
 
   api-gateway:
-    build: ./api-gateway
+    build:
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
     environment:
       PORT: 4000
       AUTH_SERVICE_URL: http://auth-service:4001
@@ -101,7 +101,9 @@ services:
     depends_on: [redis]
 
   auth-service:
-    build: ./services/auth-service
+    build:
+      context: .
+      dockerfile: ./services/auth-service/Dockerfile
     environment:
       PORT: 4001
       DATABASE_URL: postgresql://postgres:password@postgres-auth:5432/auth
@@ -113,7 +115,9 @@ services:
     depends_on: [postgres-auth, redis]
 
   product-service:
-    build: ./services/product-service
+    build:
+      context: .
+      dockerfile: ./services/product-service/Dockerfile
     environment:
       PORT: 4002
       MONGO_URI: mongodb://mongo-product:27017/products
@@ -123,7 +127,9 @@ services:
     depends_on: [mongo-product, redis]
 
   pricing-service:
-    build: ./services/pricing-service
+    build:
+      context: .
+      dockerfile: ./services/pricing-service/Dockerfile
     environment:
       PORT: 4003
       DATABASE_URL: postgresql://postgres:password@postgres-pricing:5432/pricing
@@ -132,7 +138,9 @@ services:
     depends_on: [postgres-pricing]
 
   inventory-service:
-    build: ./services/inventory-service
+    build:
+      context: .
+      dockerfile: ./services/inventory-service/Dockerfile
     environment:
       PORT: 4004
       DATABASE_URL: postgresql://postgres:password@postgres-inventory:5432/inventory
@@ -141,7 +149,9 @@ services:
     depends_on: [postgres-inventory]
 
   cart-service:
-    build: ./services/cart-service
+    build:
+      context: .
+      dockerfile: ./services/cart-service/Dockerfile
     environment:
       PORT: 4005
       DATABASE_URL: postgresql://postgres:password@postgres-cart:5432/cart
@@ -151,7 +161,9 @@ services:
     depends_on: [postgres-cart, redis]
 
   order-service:
-    build: ./services/order-service
+    build:
+      context: .
+      dockerfile: ./services/order-service/Dockerfile
     environment:
       PORT: 4006
       DATABASE_URL: postgresql://postgres:password@postgres-order:5432/orders
@@ -161,7 +173,9 @@ services:
     depends_on: [postgres-order, rabbitmq]
 
   payment-service:
-    build: ./services/payment-service
+    build:
+      context: .
+      dockerfile: ./services/payment-service/Dockerfile
     environment:
       PORT: 4007
       DATABASE_URL: postgresql://postgres:password@postgres-payment:5432/payment
@@ -171,7 +185,9 @@ services:
     depends_on: [postgres-payment, rabbitmq]
 
   seller-service:
-    build: ./services/seller-service
+    build:
+      context: .
+      dockerfile: ./services/seller-service/Dockerfile
     environment:
       PORT: 4008
       DATABASE_URL: postgresql://postgres:password@postgres-seller:5432/seller
@@ -180,7 +196,9 @@ services:
     depends_on: [postgres-seller]
 
   shipping-service:
-    build: ./services/shipping-service
+    build:
+      context: .
+      dockerfile: ./services/shipping-service/Dockerfile
     environment:
       PORT: 4009
       DATABASE_URL: postgresql://postgres:password@postgres-shipping:5432/shipping
@@ -189,7 +207,9 @@ services:
     depends_on: [postgres-shipping]
 
   notification-service:
-    build: ./services/notification-service
+    build:
+      context: .
+      dockerfile: ./services/notification-service/Dockerfile
     environment:
       PORT: 4010
       DATABASE_URL: postgresql://postgres:password@postgres-notification:5432/notification
@@ -199,7 +219,9 @@ services:
     depends_on: [postgres-notification, rabbitmq]
 
   review-service:
-    build: ./services/review-service
+    build:
+      context: .
+      dockerfile: ./services/review-service/Dockerfile
     environment:
       PORT: 4011
       MONGO_URI: mongodb://mongo-review:27017/reviews
@@ -208,7 +230,9 @@ services:
     depends_on: [mongo-review]
 
   docs-service:
-    build: ./services/docs-service
+    build:
+      context: .
+      dockerfile: ./services/docs-service/Dockerfile
     environment:
       PORT: 4012
       SERVICE_NAME: docs-service

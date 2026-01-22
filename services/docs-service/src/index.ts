@@ -3,15 +3,16 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+dotenv.config();
+
 import swaggerUi from 'swagger-ui-express';
 import router from './routes';
 import { requestTracing } from '../../../shared/utils/tracing';
 import { errorHandler } from '../../../shared/middleware/errorHandler';
 import { setupGracefulShutdown } from '../../../shared/utils/gracefulShutdown';
 import { logger } from '../../../shared/utils/logger';
-import { docsAggregator } from './services/docsAggregator';
+import { docsAggregator, type ServiceConfig } from './services/docsAggregator';
 
-dotenv.config();
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -39,7 +40,7 @@ app.get('/docs', async (_req, res) => {
       <body>
         <h1>E-boo API Documentation</h1>
         <p>Select a service to view its API documentation:</p>
-        ${services.map(s => `
+        ${services.map((s: ServiceConfig) => `
           <div class="service">
             <h3>${s.name}</h3>
             <p><a href="/docs/${s.name}" target="_blank">View Documentation</a></p>
@@ -67,4 +68,4 @@ const server = app.listen(port, () => {
 
 setupGracefulShutdown(server, async () => {
   // Cleanup if needed
-});
+});

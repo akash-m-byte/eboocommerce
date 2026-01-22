@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { logger } from '../../../shared/utils/logger';
+import { logger } from '../../../../shared/utils/logger';
 
-interface ServiceConfig {
+export interface ServiceConfig {
   name: string;
   url: string;
   basePath: string;
@@ -66,3 +66,5 @@ export class DocsAggregator {
     return this.services;
   }
 }
+
+export const docsAggregator = new DocsAggregator();

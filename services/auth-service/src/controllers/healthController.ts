@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../repositories/prisma';
 
 export const healthController = {

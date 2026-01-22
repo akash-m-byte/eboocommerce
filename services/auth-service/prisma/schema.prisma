@@ -1,4 +1,4 @@
-﻿// Prisma schema for auth-service
+// Prisma schema for auth-service
 
 generator client {
   provider = "prisma-client-js"
@@ -16,13 +16,17 @@ enum Role {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(CUSTOMER)
-  createdAt    DateTime @default(now())
-  refreshTokens RefreshToken[]
-  sessions     Session[]
+  id                String    @id @default(uuid())
+  email             String    @unique
+  passwordHash      String
+  role              Role      @default(CUSTOMER)
+  emailVerified     Boolean   @default(false)
+  emailVerifiedAt   DateTime?
+  createdAt         DateTime  @default(now())
+  refreshTokens      RefreshToken[]
+  sessions          Session[]
+  passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
 }
 
 model RefreshToken {
@@ -41,4 +45,24 @@ model Session {
   createdAt DateTime @default(now())
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

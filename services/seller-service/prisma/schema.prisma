@@ -1,4 +1,4 @@
-﻿// Prisma schema for seller-service
+// Prisma schema for seller-service
 
 generator client {
   provider = "prisma-client-js"

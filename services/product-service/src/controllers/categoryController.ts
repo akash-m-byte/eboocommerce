@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { categoryService } from '../services/categoryService';
 
 export const categoryController = {
