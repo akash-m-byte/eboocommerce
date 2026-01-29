@@ -54,7 +54,19 @@ prisma.$connect()
       logger.info('PostgreSQL connection closed');
     });
   })
-  .catch((error) => {
-    logger.error({ error }, 'Failed to connect to PostgreSQL');
+  .catch((error: any) => {
+    logger.error(
+      {
+        message: error?.message,
+        code: error?.code,
+        cause: error?.cause?.message,
+        stack: error?.stack
+      },
+      'Failed to connect to PostgreSQL'
+    );
+    console.error('Connection error:', error?.message || error);
+    if (error?.message?.includes('certificate') || error?.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE') {
+      console.error('Tip: Set DATABASE_SSL_INSECURE=true if the DB uses a self-signed certificate.');
+    }
     process.exit(1);
   });

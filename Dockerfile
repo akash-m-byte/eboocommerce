@@ -1,6 +1,5 @@
 # Build from repo root: docker build -t eboocommerce .
-# Uses Debian slim (not Alpine) so Prisma/OpenSSL work on Render and other hosts.
-FROM node:20-slim AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -15,8 +14,10 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build && npm prune --production
 
-# Production image – no npm install, copy from builder
-FROM node:20-slim
+# Production image – Alpine + OpenSSL so Prisma works (no need to pull node:20-slim)
+FROM node:20-alpine
+
+RUN apk add --no-cache openssl ca-certificates
 
 WORKDIR /app
 
