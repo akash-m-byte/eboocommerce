@@ -14,7 +14,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/categories:
+ * /categories:
  *   get:
  *     summary: List all categories
  *     tags: [Categories]
@@ -32,7 +32,7 @@ router.get('/', categoryController.list);
 
 /**
  * @swagger
- * /api/categories/parent:
+ * /categories/parent:
  *   get:
  *     summary: Get categories by parent
  *     tags: [Categories]
@@ -50,7 +50,7 @@ router.get('/parent', categoryController.getByParent);
 
 /**
  * @swagger
- * /api/categories/slug/{slug}:
+ * /categories/slug/{slug}:
  *   get:
  *     summary: Get category by slug
  *     tags: [Categories]
@@ -68,7 +68,7 @@ router.get('/slug/:slug', validateParams(categorySlugParamsSchema), categoryCont
 
 /**
  * @swagger
- * /api/categories/{id}:
+ * /categories/{id}:
  *   get:
  *     summary: Get category by ID
  *     tags: [Categories]
@@ -86,7 +86,7 @@ router.get('/:id', validateParams(categoryParamsSchema), categoryController.get)
 
 /**
  * @swagger
- * /api/categories:
+ * /categories:
  *   post:
  *     summary: Create a new category
  *     tags: [Categories]
@@ -108,7 +108,7 @@ router.post('/', authenticate, requireRole('ADMIN', 'SELLER'), validate(createCa
 
 /**
  * @swagger
- * /api/categories/{id}:
+ * /categories/{id}:
  *   put:
  *     summary: Update a category
  *     tags: [Categories]
@@ -136,7 +136,7 @@ router.put('/:id', authenticate, requireRole('ADMIN', 'SELLER'), validateParams(
 
 /**
  * @swagger
- * /api/categories/{id}:
+ * /categories/{id}:
  *   delete:
  *     summary: Delete a category
  *     tags: [Categories]

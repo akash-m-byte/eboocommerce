@@ -20,7 +20,7 @@ const handleMulterError = (err: unknown, _req: Request, _res: Response, next: Ne
 
 /**
  * @swagger
- * /api/upload:
+ * /upload:
  *   post:
  *     summary: Upload a single image to Cloudinary (e.g. category image)
  *     tags: [Upload]
@@ -72,7 +72,7 @@ router.post('/', authenticate, requireRole('ADMIN', 'SELLER'), (req, res, next) 
 
 /**
  * @swagger
- * /api/upload/multiple:
+ * /upload/multiple:
  *   post:
  *     summary: Upload multiple images (e.g. product images, variant images)
  *     tags: [Upload]

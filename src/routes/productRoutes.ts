@@ -14,7 +14,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/products:
+ * /products:
  *   get:
  *     summary: List all products
  *     tags: [Products]
@@ -95,7 +95,7 @@ router.get('/', productController.list);
 
 /**
  * @swagger
- * /api/products/seller/{sellerId}:
+ * /products/seller/{sellerId}:
  *   get:
  *     summary: Get products by seller
  *     tags: [Products]
@@ -123,7 +123,7 @@ router.get('/seller/:sellerId', productController.getBySeller);
 
 /**
  * @swagger
- * /api/products/slug/{slug}:
+ * /products/slug/{slug}:
  *   get:
  *     summary: Get a product by slug
  *     tags: [Products]
@@ -143,7 +143,7 @@ router.get('/slug/:slug', productController.getBySlug);
 
 /**
  * @swagger
- * /api/products/{id}:
+ * /products/{id}:
  *   get:
  *     summary: Get a product by ID
  *     tags: [Products]
@@ -168,7 +168,7 @@ router.get('/:id', validateParams(productParamsSchema), productController.get);
 
 /**
  * @swagger
- * /api/products:
+ * /products:
  *   post:
  *     summary: Create a new product
  *     tags: [Products]
@@ -196,7 +196,7 @@ router.post('/', authenticate, requireRole('ADMIN', 'SELLER'), validate(createPr
 
 /**
  * @swagger
- * /api/products/{id}:
+ * /products/{id}:
  *   put:
  *     summary: Update a product
  *     tags: [Products]
@@ -226,7 +226,7 @@ router.put('/:id', authenticate, requireRole('ADMIN', 'SELLER'), validateParams(
 
 /**
  * @swagger
- * /api/products/{id}:
+ * /products/{id}:
  *   delete:
  *     summary: Delete a product
  *     tags: [Products]
@@ -250,7 +250,7 @@ router.delete('/:id', authenticate, requireRole('ADMIN'), validateParams(product
 
 /**
  * @swagger
- * /api/products/{id}/stock:
+ * /products/{id}/stock:
  *   patch:
  *     summary: Update product stock
  *     tags: [Products]
