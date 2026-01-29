@@ -1,6 +1,6 @@
 # Build from repo root: docker build -t eboocommerce .
-# Uses BuildKit cache mounts for faster npm install.
-FROM node:20-alpine AS builder
+# Uses Debian slim (not Alpine) so Prisma/OpenSSL work on Render and other hosts.
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY src ./src
 RUN npm run build && npm prune --production
 
 # Production image – no npm install, copy from builder
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
