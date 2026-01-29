@@ -1,0 +1,21 @@
+# Dependencies and build output (we install in container)
+node_modules
+dist
+.npm
+
+# Git and IDE
+.git
+.gitignore
+.cursor
+.vscode
+*.md
+
+# Env and secrets (pass at runtime)
+.env
+.env.*
+!.env.example
+
+# Tests and misc
+coverage
+*.log
+.DS_Store

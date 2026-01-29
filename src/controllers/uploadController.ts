@@ -88,7 +88,7 @@ export const uploadMultipleFiles = async (req: Request, res: Response, next: Nex
             (err, result) => {
               if (err) return reject(err);
               if (!result?.secure_url) return reject(new Error('Upload failed'));
-              const optimizeUrl = cloudinary.url(result.public_id, {
+              const optimizedUrl = cloudinary.url(result.public_id, {
                 fetch_format: 'auto',
                 quality: 'auto'
               });

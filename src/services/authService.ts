@@ -26,6 +26,7 @@ export interface AuthResult {
     id: string;
     email: string;
     role: string;
+    emailVerified?: boolean;
   };
   accessToken: string;
   refreshToken: string;

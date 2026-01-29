@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { categoryService } from '../services/categoryService';
+import { CategoryStatus } from '@prisma/client';
 
 export const categoryController = {
   list: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const status = req.query.status?.toString();
+      const status = req.query.status?.toString() as CategoryStatus | undefined;
       const items = await categoryService.list(status);
       res.json(items);
     } catch (error) {
